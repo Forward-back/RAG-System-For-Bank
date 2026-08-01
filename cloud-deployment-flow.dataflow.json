@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "全栈项目云部署 — 用户访问全流程",
+    "subtitle": "浏览器/移动端 → CDN/负载均衡 → 前端服务 → API网关 → 业务服务 → 缓存/数据库 → 监控，含 CI/CD 持续部署",
+    "output": "cloud-deployment-flow.html",
+    "viewBox": [1100, 800],
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "user-request",
+        "label": "用户请求路径",
+        "focus": ["browser", "cdn", "frontend", "apigateway", "backend", "redis", "database"],
+        "note": "从浏览器发出请求到数据持久化的完整热路径。"
+      },
+      {
+        "id": "cicd-deploy",
+        "label": "CI/CD 部署",
+        "focus": ["cicd", "frontend", "backend", "monitor"],
+        "note": "代码提交后自动构建、测试、部署到云服务器的流程。"
+      }
+    ]
+  },
+  "stages": [
+    { "label": "用户端" },
+    { "label": "接入层" },
+    { "label": "应用层" },
+    { "label": "数据层" },
+    { "label": "运维层" }
+  ],
+  "nodes": [
+    { "id": "browser",  "type": "frontend",  "label": "浏览器",   "sublabel": "SPA / SSR",       "stage": 0, "row": 0, "tag": "用户" },
+    { "id": "mobile",   "type": "frontend",  "label": "移动App",  "sublabel": "iOS / Android",   "stage": 0, "row": 4, "tag": "用户" },
+
+    { "id": "cdn",      "type": "cloud",     "label": "CDN 加速", "sublabel": "静态资源边缘缓存", "stage": 1, "row": 0, "tag": "边缘节点" },
+    { "id": "lb",       "type": "cloud",     "label": "负载均衡", "sublabel": "Nginx / ALB",      "stage": 1, "row": 4, "tag": "流量入口" },
+
+    { "id": "frontend", "type": "frontend",  "label": "前端服务", "sublabel": "Nginx 静态托管",    "stage": 2, "row": 0, "tag": "端口 443" },
+    { "id": "apigateway","type": "backend",  "label": "API 网关", "sublabel": "鉴权 / 限流 / 路由", "stage": 2, "row": 2, "tag": "入口" },
+    { "id": "backend",  "type": "backend",   "label": "业务服务", "sublabel": "微服务集群 (Docker)","stage": 2, "row": 4, "tag": "核心" },
+
+    { "id": "redis",    "type": "database",  "label": "Redis 缓存","sublabel": "热数据 / Session",  "stage": 3, "row": 1, "tag": "内存" },
+    { "id": "database", "type": "database",  "label": "主数据库",  "sublabel": "RDS (MySQL / PG)",  "stage": 3, "row": 3, "tag": "持久化" },
+
+    { "id": "cicd",     "type": "backend",   "label": "CI/CD 流水线","sublabel": "Git Push → 构建 → 部署","stage": 4, "row": 1, "tag": "自动化" },
+    { "id": "monitor",  "type": "backend",   "label": "监控告警", "sublabel": "Prometheus + Grafana","stage": 4, "row": 3, "tag": "可观测" }
+  ],
+  "flows": [
+    {
+      "id": "browser-cdn",
+      "from": "browser", "to": "cdn",
+      "label": "静态资源请求",
+      "classification": "HTTPS",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [207, 140]
+    },
+    {
+      "id": "mobile-lb",
+      "from": "mobile", "to": "lb",
+      "label": "动态 API 请求",
+      "classification": "HTTPS / gRPC",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [207, 596]
+    },
+    {
+      "id": "cdn-frontend",
+      "from": "cdn", "to": "frontend",
+      "label": "缓存未命中回源",
+      "classification": "静态资源",
+      "variant": "default",
+      "route": "straight",
+      "labelAt": [422, 140]
+    },
+    {
+      "id": "lb-apigateway",
+      "from": "lb", "to": "apigateway",
+      "label": "流量路由分发",
+      "classification": "反向代理",
+      "variant": "emphasis",
+      "fromSide": "right", "toSide": "left",
+      "via": [[400, 613], [400, 385]],
+      "labelAt": [434, 502]
+    },
+    {
+      "id": "frontend-apigateway",
+      "from": "frontend", "to": "apigateway",
+      "label": "Ajax / Fetch 调用",
+      "classification": "SPA API",
+      "variant": "default",
+      "fromSide": "bottom", "toSide": "top",
+      "via": [[530, 220], [610, 220], [610, 320], [530, 320]],
+      "labelAt": [585, 230]
+    },
+    {
+      "id": "apigateway-backend",
+      "from": "apigateway", "to": "backend",
+      "label": "业务请求路由",
+      "classification": "内部 RPC",
+      "variant": "emphasis",
+      "fromSide": "bottom", "toSide": "top",
+      "via": [[530, 450], [610, 450], [610, 550], [530, 550]],
+      "labelAt": [585, 465]
+    },
+    {
+      "id": "backend-redis",
+      "from": "backend", "to": "redis",
+      "label": "热数据缓存",
+      "classification": "读多写少",
+      "variant": "default",
+      "fromSide": "right", "toSide": "left",
+      "via": [[630, 613], [630, 271]],
+      "labelAt": [660, 395]
+    },
+    {
+      "id": "backend-database",
+      "from": "backend", "to": "database",
+      "label": "数据持久化",
+      "classification": "OLTP",
+      "variant": "emphasis",
+      "fromSide": "right", "toSide": "left",
+      "via": [[675, 613], [675, 499]],
+      "labelAt": [682, 540]
+    },
+    {
+      "id": "backend-monitor",
+      "from": "backend", "to": "monitor",
+      "label": "指标 / 日志上报",
+      "classification": "可观测性",
+      "variant": "dashed",
+      "fromSide": "bottom", "toSide": "right",
+      "via": [[530, 680], [1050, 680], [1050, 499]],
+      "labelAt": [780, 695]
+    },
+    {
+      "id": "cicd-frontend",
+      "from": "cicd", "to": "frontend",
+      "label": "构建部署静态资源",
+      "classification": "自动化",
+      "variant": "dashed",
+      "fromSide": "left", "toSide": "top",
+      "via": [[880, 271], [880, 88], [530, 88]],
+      "labelAt": [720, 70]
+    },
+    {
+      "id": "cicd-backend",
+      "from": "cicd", "to": "backend",
+      "label": "构建部署容器镜像",
+      "classification": "自动化",
+      "variant": "dashed",
+      "fromSide": "left", "toSide": "right",
+      "via": [[880, 271], [880, 720], [670, 720], [670, 613]],
+      "labelAt": [740, 735]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "用户请求主链路（实线）",
+      "items": [
+        "浏览器 → CDN → 前端服务：静态资源加速分发，未命中时回源到 Nginx",
+        "移动App → 负载均衡 → API 网关 → 业务服务：动态请求经反向代理路由到微服务集群",
+        "前端 SPA 通过 Ajax 调用 API 网关，实现前后端分离"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "数据处理层",
+      "items": [
+        "业务服务优先查询 Redis 缓存，命中即返回，大幅降低数据库负载",
+        "写操作与缓存未命中时，走主数据库 (RDS) 持久化存储",
+        "Session / Token 等热数据存放于 Redis，支持集群横向扩展"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "CI/CD 与可观测性（虚线）",
+      "items": [
+        "代码 Push 到 Git 仓库后，CI/CD 流水线自动构建 Docker 镜像并部署到云服务器",
+        "前端静态资源构建后推送至 Nginx 目录或对象存储",
+        "业务服务实时上报指标与日志到 Prometheus + Grafana 监控平台"
+      ]
+    }
+  ]
+}

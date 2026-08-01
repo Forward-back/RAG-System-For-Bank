@@ -1,0 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+
+#data
+data/
+
+#vectorDb
+chroma_db/
+
+# Runtime
+logs/
+cache/
+
+#API
+.env
+
+# Claude
+.claude/

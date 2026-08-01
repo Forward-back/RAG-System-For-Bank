@@ -1,0 +1,52 @@
+fastapi
+uvicorn
+slowapi
+openai
+
+langchain
+langchain-community
+langchain-core
+langchain-text-splitters
+langsmith
+
+sentence-transformers
+transformers
+huggingface-hub
+tokenizers
+safetensors
+
+chromadb
+rank-bm25
+jieba
+mmh3
+PyPika
+
+numpy
+pandas
+scikit-learn
+scipy
+
+torch>=2.2.0
+pydantic
+pydantic_core
+python-dotenv
+
+requests
+urllib3
+tqdm
+
+pypdf
+pdfminer.six
+pdf2image
+pytesseract
+mysql-connector-python
+unstructured
+# ── Optional: for PDF table detection & OCR ──
+#   pip install "unstructured[pdf]"
+#   strategy="auto"  → uses pdfminer.six (bundled with unstructured, no extra deps)
+#   strategy="hi_res" → pip install "unstructured[pdf]" and install system deps:
+#       • tesseract-ocr + chi_sim language pack (https://github.com/tesseract-ocr/tesseract)
+#       • poppler (https://github.com/oschwartz10612/poppler-windows/releases)
+#       • detectron2, torch, torchvision (pre-install torch matching your CUDA version first)
+# ── Optional: for DOCX table extraction ──
+#   pip install "unstructured[docx]"   (brings python-docx)
